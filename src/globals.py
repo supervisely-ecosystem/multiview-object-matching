@@ -25,9 +25,8 @@ class Cache:
         self.project_metas = {}
         self.project_meta = None
         self.project_settings = {}
-        self.path_to_id = {}
         self.group_tag_id = None
-        self.path_to_id = None
+        self.path_to_id = {}
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
@@ -52,9 +51,15 @@ class Cache:
             self.project_meta = project_meta
 
     def cache_event(self, event: sly.Event.ManualSelected.FigureChanged):
-        attrs_to_ignore = ["tool"]
+        attrs_to_cache = [
+            "project_id",
+            "dataset_id",
+            "image_id",
+            "figure_id",
+        ]
         for k, v in event.__dict__.items():
-            self.__dict__[k] = v
+            if k in attrs_to_cache:
+                self.__dict__[k] = v
         self.cache_project_meta()
         self.log_contents()
 
@@ -83,6 +88,7 @@ class Cache:
             if tag[AF.TAG_ID] == group_tag_id:
                 group_tag_value = tag[AF.VALUE]
                 break
+        # to make sure reference image info is always first
         image_infos = [ref_img_info] + [info for info in self._get_group_imageinfos(group_tag_id, group_tag_value) if info.id != self.image_id]
 
         path_to_id = {f"{SLY_APP_DATA}/{info.name}": info.id for info in image_infos}
@@ -92,7 +98,7 @@ class Cache:
         paths = list(path_to_id.keys())
 
         api.image.download_paths(self.dataset_id, ids, paths)
-        return paths # check that reference image id is first here
+        return paths
 
     def get_bbox(self):
         bbox = api.annotation.get_label_by_id(self.figure_id, self.project_meta)
