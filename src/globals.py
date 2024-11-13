@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 import supervisely as sly
-from supervisely.api.annotation_api import ApiField
+from supervisely.api.annotation_api import ApiField as AF
 import supervisely.app.development as development
 from typing import List
 
@@ -36,7 +36,7 @@ class Cache:
         if name in self.__dict__:
             return self.__dict__[name]
         raise AttributeError(f"'Cache' object has no attribute '{name}'")
-    
+
     def cache_project_meta(self):
         project_id = self.project_id
         if project_id not in self.project_metas:
@@ -47,20 +47,30 @@ class Cache:
             self.project_settings[project_id] = project_settings
             if project_settings["groupImages"] is False:
                 raise RuntimeError("App only supports multiview projects.")
-            
+
             self.group_tag_id = project_settings['groupImagesByTagId']
             self.project_meta = project_meta
 
     def cache_event(self, event: sly.Event.ManualSelected.FigureChanged):
+        attrs_to_ignore = ["tool"]
         for k, v in event.__dict__.items():
             self.__dict__[k] = v
         self.cache_project_meta()
-        # self.log_contents()
+        self.log_contents()
 
     def _get_group_imageinfos(self, tag_id, tag_value):
-        filters = [{ApiField.TYPE: 'images_tag', ApiField.DATA: {ApiField.TAG_ID: tag_id, ApiField.INCLUDE: True, ApiField.VALUE: tag_value}}]
+        filters = [
+            {
+                AF.TYPE: "images_tag",
+                AF.DATA: {
+                    AF.TAG_ID: tag_id,
+                    AF.INCLUDE: True,
+                    AF.VALUE: tag_value,
+                },
+            }
+        ]
         return api.image.get_filtered_list(self.dataset_id, filters)
-    
+
     def download_images(self) -> List[str]:
         ref_img_info = api.image.get_info_by_id(self.image_id)
         group_tag_id = self.group_tag_id
@@ -70,8 +80,8 @@ class Cache:
 
         group_tag_value = None
         for tag in ref_img_info.tags:
-            if tag[ApiField.TAG_ID] == group_tag_id:
-                group_tag_value = tag[ApiField.VALUE]
+            if tag[AF.TAG_ID] == group_tag_id:
+                group_tag_value = tag[AF.VALUE]
                 break
         image_infos = [ref_img_info] + [info for info in self._get_group_imageinfos(group_tag_id, group_tag_value) if info.id != self.image_id]
 
@@ -83,12 +93,15 @@ class Cache:
 
         api.image.download_paths(self.dataset_id, ids, paths)
         return paths # check that reference image id is first here
-    
+
     def get_bbox(self):
         bbox = api.annotation.get_label_by_id(self.figure_id, self.project_meta)
         return bbox.geometry, bbox.obj_class
 
     def log_contents(self):
-        sly.logger.debug(f"CACHE", extra=self.__dict__)
+        cache = {
+            k: v for k, v in self.__dict__.items() if k not in ["project_metas", "project_meta"]
+        }
+        sly.logger.debug(f"CACHE", extra=cache)
 
 CACHE = Cache()
