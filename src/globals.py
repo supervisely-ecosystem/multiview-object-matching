@@ -1,43 +1,94 @@
 import os
-
-import supervisely as sly
 from dotenv import load_dotenv
+import supervisely as sly
+from supervisely.api.annotation_api import ApiField
+import supervisely.app.development as development
+from typing import List
 
+# * Advanced debug mode
 if sly.is_development():
-    # * For convinient development, has no effect in the production.
     load_dotenv("local.env")
     load_dotenv(os.path.expanduser("~/supervisely.env"))
 
+    development.supervisely_vpn_network(action="up")
+    development.create_debug_task(sly.env.team_id(), port="8000")
 
 # * Creating an instance of the supervisely API according to the environment variables.
 api = sly.Api.from_env()
 
+SLY_APP_DATA = sly.app.get_data_dir()
+sly.fs.clean_dir(SLY_APP_DATA)
+MODEL_DIR = "./checkpoints"
 
-# * This variable requires SLY_APP_DATA_DIR in local.env file.
-SLY_APP_DATA_DIR = sly.app.get_data_dir()
-
-
-# * If the app needed static dir (showing local path in web UI), it should be created here.
-# * If not needed, this code can be securely removed.
-STATIC_DIR = os.path.join(SLY_APP_DATA_DIR, "static")
-sly.fs.mkdir(STATIC_DIR)
-
-
-# * To avoid global variables in different modules, it's better to use g.STATE (g.AppState) object
-# * across the app. It can be accessed from any module by importing globals module.
-class State:
+class Cache:
     def __init__(self):
-        # * This class should contain all the variables that are used across the app.
-        # * For example selected team, workspace, project, dataset, etc.
-        self.selected_team = sly.env.team_id()
-        self.selected_workspace = sly.env.workspace_id()
-        self.selected_project = sly.env.project_id(raise_not_found=False)
-        self.selected_dataset = sly.env.dataset_id(raise_not_found=False)
+        self.project_metas = {}
+        self.project_meta = None
+        self.project_settings = {}
+        self.path_to_id = {}
+        self.group_tag_id = None
+        self.path_to_id = None
 
-        self.continue_working = True
+    def __setattr__(self, name, value):
+        self.__dict__[name] = value
 
+    def __getattr__(self, name):
+        if name in self.__dict__:
+            return self.__dict__[name]
+        raise AttributeError(f"'Cache' object has no attribute '{name}'")
+    
+    def cache_project_meta(self):
+        project_id = self.project_id
+        if project_id not in self.project_metas:
+            project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
+            self.project_metas[project_id] = project_meta
 
-# * Class object to access from other modules.
-# * import src.globals as g
-# * selected_team = g.STATE.selected_team
-STATE = State()
+            project_settings = api.project.get_settings(self.project_id)
+            self.project_settings[project_id] = project_settings
+            if project_settings["groupImages"] is False:
+                raise RuntimeError("App only supports multiview projects.")
+            
+            self.group_tag_id = project_settings['groupImagesByTagId']
+            self.project_meta = project_meta
+
+    def cache_event(self, event: sly.Event.ManualSelected.FigureChanged):
+        for k, v in event.__dict__.items():
+            self.__dict__[k] = v
+        self.cache_project_meta()
+        # self.log_contents()
+
+    def _get_group_imageinfos(self, tag_id, tag_value):
+        filters = [{ApiField.TYPE: 'images_tag', ApiField.DATA: {ApiField.TAG_ID: tag_id, ApiField.INCLUDE: True, ApiField.VALUE: tag_value}}]
+        return api.image.get_filtered_list(self.dataset_id, filters)
+    
+    def download_images(self) -> List[str]:
+        ref_img_info = api.image.get_info_by_id(self.image_id)
+        group_tag_id = self.group_tag_id
+        if group_tag_id is None:
+            self.cache_project_meta()
+            group_tag_id = self.group_tag_id
+
+        group_tag_value = None
+        for tag in ref_img_info.tags:
+            if tag[ApiField.TAG_ID] == group_tag_id:
+                group_tag_value = tag[ApiField.VALUE]
+                break
+        image_infos = [ref_img_info] + [info for info in self._get_group_imageinfos(group_tag_id, group_tag_value) if info.id != self.image_id]
+
+        path_to_id = {f"{SLY_APP_DATA}/{info.name}": info.id for info in image_infos}
+        self.path_to_id = path_to_id
+
+        ids = list(path_to_id.values())
+        paths = list(path_to_id.keys())
+
+        api.image.download_paths(self.dataset_id, ids, paths)
+        return paths # check that reference image id is first here
+    
+    def get_bbox(self):
+        bbox = api.annotation.get_label_by_id(self.figure_id, self.project_meta)
+        return bbox.geometry, bbox.obj_class
+
+    def log_contents(self):
+        sly.logger.debug(f"CACHE", extra=self.__dict__)
+
+CACHE = Cache()

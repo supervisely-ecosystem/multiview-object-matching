@@ -1,4 +1,2 @@
 supervisely
-
-# code formatter
-black
+torch
