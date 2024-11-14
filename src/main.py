@@ -1,6 +1,7 @@
 import supervisely as sly
 import src.ui.layout as layout
 import src.globals as g
+from src.globals import CACHE
 import src.process_funcs as process
 
 app = sly.Application(layout=layout.layout_card)
@@ -14,7 +15,7 @@ app = sly.Application(layout=layout.layout_card)
 #         layout.match_bbox_button.enable()
 #     g.CACHE.cache_event(event)
 
-
+# @TODO: Add single bbox mode aswell v ^
 @app.event(sly.Event.ManualSelected.FigureChanged)
 def figure_changed_cb(api: sly.Api, event: sly.Event.ManualSelected.FigureChanged):
     pass
@@ -22,8 +23,8 @@ def figure_changed_cb(api: sly.Api, event: sly.Event.ManualSelected.FigureChange
 
 @app.event(sly.Event.ManualSelected.ImageChanged)
 def image_changed_cb(api: sly.Api, event: sly.Event.ManualSelected.ImageChanged):
-    g.CACHE.cache_event(event)
-    if g.CACHE.image_has_bboxes() is True:
+    CACHE.cache_event(event)
+    if CACHE.image_has_bboxes() and CACHE.grouping_is_on():
         layout.match_bbox_button.enable()
     else:
         layout.match_bbox_button.disable()
@@ -32,16 +33,15 @@ def image_changed_cb(api: sly.Api, event: sly.Event.ManualSelected.ImageChanged)
 @layout.match_bbox_button.click
 @sly.timeit
 def match_click_cb():
-    g.CACHE.log_contents()
+    # CACHE.log_contents()
+    CACHE.add_tag_to_projmeta()
     device = layout.device_selector.get_device()
     if device is None:
         sly.logger.error("No device selected")
         return
-    if not g.CACHE.grouping_is_on():
-        sly.logger.warning("Grouping is disabled, or no grouping tag found.")
-        return
-    image_paths = g.CACHE.download_images()
-    ref_bbox_labels = g.CACHE.reference_boxes
+
+    image_paths = CACHE.download_group_images()
+    ref_bbox_labels = CACHE.get_reference_bbox_labels()
 
     sly.logger.info(
         f"Appying lightglue for {len(image_paths)} images on '{device.upper()}' device",
@@ -53,13 +53,22 @@ def match_click_cb():
         )
 
         ids = list(id_to_labels.keys())
-        boxes_labels = list(id_to_labels.values())
-
-        orig_anns = g.CACHE.download_anns(ids)
+        boxes_labels = [
+            CACHE.add_tag_to_labels((box_list), "matched") for box_list in id_to_labels.values()
+        ]
+        orig_anns = CACHE.download_anns(ids)
         anns = [ann.add_labels(box_labels) for ann, box_labels in zip(orig_anns, boxes_labels)]
 
-        sly.logger.info(f"Uploading {len(anns)} annotations...")
-        g.api.annotation.upload_anns(ids, anns)
+        ids_to_upload = [CACHE.image_id] + ids
+        ref_ann = CACHE.image_ann
+        new_ref_ann_labels = []
+        for label in ref_ann.labels:
+            if label in ref_bbox_labels:
+                label = CACHE.add_tag_to_labels([label], "reference")[0]
+            new_ref_ann_labels.append(label)
+        anns_to_upload = [ref_ann.clone(labels=new_ref_ann_labels)] + anns
+        sly.logger.info(f"Uploading {len(anns_to_upload)} annotations...")
+        g.api.annotation.upload_anns(ids_to_upload, anns_to_upload)
     except Exception as e:
         sly.logger.error(f"An error occured while processing bboxes: {e}")
     finally:
@@ -67,5 +76,7 @@ def match_click_cb():
         sly.fs.clean_dir(g.SLY_APP_DATA)
 
 
-# @TODO: uuid tag, docker image, batches, modal window, check params like resize, homography thresholds, lightglue confidence,
-# think about resizing and cuda: add modal window option
+# @TODO: don't process images with tag, docker image, modal window, check lightglue confidence,
+# add modal window option for resizing
+
+# to think through: meta is getting cached, and if updated, will be overwritten when processing code runs, leading to errors.
