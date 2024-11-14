@@ -33,6 +33,7 @@ def image_changed_cb(api: sly.Api, event: sly.Event.ManualSelected.ImageChanged)
 @sly.handle_exceptions
 @sly.timeit
 def match_click_cb():
+    g.CACHE.log_contents()
     device = layout.device_selector.get_device()
     if device is None:
         sly.logger.error("No device selected")

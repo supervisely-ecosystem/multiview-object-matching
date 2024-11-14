@@ -38,7 +38,7 @@ def apply_lightglue_bounding_boxes(
 
     # Load the reference image and extract features
     ref_image = load_image(reference_image_path).to(device)
-    ref_features = extractor.extract(ref_image)  # todo: try resize
+    ref_features = extractor.extract(ref_image, resize=256)  # todo: try resize
 
     # Define reference bounding box points for each bbox in reference_bboxes
     ref_bbox_points_list = [
@@ -63,7 +63,7 @@ def apply_lightglue_bounding_boxes(
         ref_features_copy = deepcopy(ref_features)
         # Load and process the current image
         img = load_image(img_path).to(device)
-        img_features = extractor.extract(img)
+        img_features = extractor.extract(img, resize=256)
 
         try:
             matches = matcher({"image0": ref_features_copy, "image1": img_features})

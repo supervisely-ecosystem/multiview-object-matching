@@ -59,7 +59,6 @@ class Cache:
             if k in attrs_to_cache:
                 self.__dict__[k] = v
         self.cache_project_meta()
-        self.log_contents()
 
     def _get_group_imageinfos(self, tag_id, tag_value):
         filters = [
