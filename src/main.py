@@ -30,7 +30,6 @@ def image_changed_cb(api: sly.Api, event: sly.Event.ManualSelected.ImageChanged)
 
 
 @layout.match_bbox_button.click
-@sly.handle_exceptions
 @sly.timeit
 def match_click_cb():
     g.CACHE.log_contents()
@@ -45,7 +44,7 @@ def match_click_cb():
     ref_bbox_labels = g.CACHE.reference_boxes
 
     sly.logger.info(
-        f"Appying lightglue for {len(image_paths)} images onto {device}",
+        f"Appying lightglue for {len(image_paths)} images on '{device.upper()}' device",
         extra={"reference bboxes count": len(ref_bbox_labels)},
     )
     try:
@@ -61,9 +60,12 @@ def match_click_cb():
 
         sly.logger.info(f"Uploading {len(anns)} annotations...")
         g.api.annotation.upload_anns(ids, anns)
+    except Exception as e:
+        sly.logger.error(f"An error occured while processing bboxes: {e}")
     finally:
         sly.logger.debug(f"Cleaning {g.SLY_APP_DATA} directory from paths: {image_paths}")
         sly.fs.clean_dir(g.SLY_APP_DATA)
 
 
-# @TODO: uuid tag, docker image, batches, modal window, check params like resize, homography thresholds, lightglue confidence
+# @TODO: uuid tag, docker image, batches, modal window, check params like resize, homography thresholds, lightglue confidence,
+# think about resizing and cuda: add modal window option

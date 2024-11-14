@@ -10,7 +10,7 @@ from copy import deepcopy
 
 def bbox_from_array(points):
     """
-    Converts numpy array to bounding box coordinates.
+    Converts numpy array to Supervisely Rectangle object.
     """
     x_min = np.min(points[:, 0])
     y_min = np.min(points[:, 1])
@@ -25,7 +25,7 @@ def bbox_from_array(points):
 def apply_lightglue_bounding_boxes(
     image_paths: List[str],
     ref_bbox_labels: List[sly.Label],
-    max_num_keypoints=1024,
+    max_num_keypoints: int = 1024,
     device: str = "cpu",
 ):
     reference_image_path = image_paths.pop(0)
@@ -38,7 +38,7 @@ def apply_lightglue_bounding_boxes(
 
     # Load the reference image and extract features
     ref_image = load_image(reference_image_path).to(device)
-    ref_features = extractor.extract(ref_image, resize=256)  # todo: try resize
+    ref_features = extractor.extract(ref_image, resize=256)
 
     # Define reference bounding box points for each bbox in reference_bboxes
     ref_bbox_points_list = [
@@ -83,7 +83,7 @@ def apply_lightglue_bounding_boxes(
             continue
 
         # Calculate the homography matrix between the reference and target image
-        H, status = cv2.findHomography(ref_matched_pts, img_matched_pts, cv2.RANSAC, 5.0)
+        H, status = cv2.findHomography(ref_matched_pts, img_matched_pts, cv2.RANSAC, 15.0)
 
         # Transform each bounding box in reference_bboxes
         result_labels = []

@@ -27,7 +27,7 @@ class Cache:
         self.project_settings = {}
         self.group_tag_id = None
         self.path_to_id = {}
-        self.reference_boxes = []
+        self.reference_boxes = {}
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
@@ -119,13 +119,13 @@ class Cache:
 
     @sly.timeit
     def image_has_bboxes(self) -> bool:
-        bbox_labels = self.get_reference_bbox_labels()
-        if len(bbox_labels) is 0:
-            sly.logger.debug("Selected image has no bbox labels")
-            return False
-        else:
-            self.reference_boxes = bbox_labels
-            return True
+        if self.image_id not in self.reference_boxes:
+            bbox_labels = self.get_reference_bbox_labels()
+            if len(bbox_labels) is 0:
+                sly.logger.debug("Selected image has no bbox labels")
+                return False
+            self.reference_boxes[self.image_id] = bbox_labels
+        return True
 
     def log_contents(self):
         cache = {
