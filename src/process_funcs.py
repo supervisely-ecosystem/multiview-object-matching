@@ -83,7 +83,7 @@ def apply_lightglue_bounding_boxes(
             continue
 
         # Calculate the homography matrix between the reference and target image
-        H, status = cv2.findHomography(ref_matched_pts, img_matched_pts, cv2.RANSAC, 15.0)
+        H, status = cv2.findHomography(ref_matched_pts, img_matched_pts, cv2.RANSAC, 5.0)
 
         # Transform each bounding box in reference_bboxes
         result_labels = []

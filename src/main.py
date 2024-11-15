@@ -39,15 +39,16 @@ def match_click_cb():
     if device is None:
         sly.logger.error("No device selected")
         return
-
-    image_paths = CACHE.download_group_images()
-    ref_bbox_labels = CACHE.get_reference_bbox_labels()
-
-    sly.logger.info(
-        f"Appying lightglue for {len(image_paths)} images on '{device.upper()}' device",
-        extra={"reference bboxes count": len(ref_bbox_labels)},
-    )
     try:
+        image_paths = CACHE.download_group_images()
+        ref_bbox_labels = CACHE.get_reference_bbox_labels()
+        if len(ref_bbox_labels) == 0:
+            sly.logger.warning("All bboxes are already processed.")
+
+        sly.logger.info(
+            f"Appying lightglue for {len(image_paths)} images on '{device.upper()}' device",
+            extra={"reference bboxes count": len(ref_bbox_labels)},
+        )
         id_to_labels = process.apply_lightglue_bounding_boxes(
             image_paths, ref_bbox_labels, 1024, device
         )

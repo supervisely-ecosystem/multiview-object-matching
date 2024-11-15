@@ -108,7 +108,14 @@ class Cache:
             api.annotation.download(self.image_id).annotation, self.project_meta
         )
         self.image_ann = ann
-        return [label for label in ann.labels if isinstance(label.geometry, sly.Rectangle)]
+        return [
+            label
+            for label in ann.labels
+            if (
+                isinstance(label.geometry, sly.Rectangle)
+                and label.tags.get(self.tag_meta.name) is None
+            )
+        ]
 
     @sly.timeit
     def download_anns(self, ids) -> List[sly.Annotation]:
@@ -127,7 +134,9 @@ class Cache:
     def image_has_bboxes(self) -> bool:
         bbox_labels = self.get_reference_bbox_labels()
         if len(bbox_labels) == 0:
-            sly.logger.debug("Selected image has no bbox labels")
+            sly.logger.debug(
+                "Selected image has no bbox labels, or all boxes are already processed"
+            )
             return False
         return True
 
@@ -139,7 +148,9 @@ class Cache:
 
     def add_tag_to_labels(self, labels: List[sly.Label], value: Literal["reference", "matched"]):
         tag = sly.Tag(self.tag_meta, value)
-        return [label.add_tag(tag) for label in labels]
+        return [
+            label.add_tag(tag) for label in labels if label.tags.get(self.tag_meta.name) is None
+        ]
 
     def log_contents(self) -> None:
         cache = {
