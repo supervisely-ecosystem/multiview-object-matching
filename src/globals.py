@@ -32,6 +32,7 @@ class Cache:
         self.tag_meta = sly.TagMeta(
             "bbox type", sly.TagValueType.ONEOF_STRING, ["reference", "matched"]
         )
+        self.figure_id = None
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
@@ -53,12 +54,16 @@ class Cache:
             self.project_meta = project_meta
 
     @sly.timeit
-    def cache_event(self, event: sly.Event.ManualSelected.FigureChanged):
+    def cache_event(self, event: sly.Event.ManualSelected.FigureChanged, cache_figure=False):
         attrs_to_cache = [
             "project_id",
             "dataset_id",
             "image_id",
         ]
+        if cache_figure is True:
+            attrs_to_cache.append("figure_id")
+        else:
+            self.figure_id = None
         for k, v in event.__dict__.items():
             if k in attrs_to_cache:
                 self.__dict__[k] = v
@@ -103,10 +108,24 @@ class Cache:
         api.image.download_paths(self.dataset_id, ids, paths)
         return paths
 
+    @sly.timeit
     def get_reference_bbox_labels(self) -> List[sly.Label]:
+        if self.figure_id is not None:
+            selected_label = api.annotation.get_label_by_id(self.figure_id, self.project_meta)
+            if selected_label is None:
+                sly.logger.warn("Selected label is not found")
+                return []
+            self.image_ann = sly.Annotation.from_json(
+                api.annotation.download(self.image_id).annotation, self.project_meta
+            )
+            return [selected_label]
+
         ann = sly.Annotation.from_json(
             api.annotation.download(self.image_id).annotation, self.project_meta
         )
+        if ann is None:
+            sly.logger.warn("Failed to download annotation.")
+            return []
         self.image_ann = ann
         return [
             label
@@ -148,9 +167,12 @@ class Cache:
 
     def add_tag_to_labels(self, labels: List[sly.Label], value: Literal["reference", "matched"]):
         tag = sly.Tag(self.tag_meta, value)
-        return [
-            label.add_tag(tag) for label in labels if label.tags.get(self.tag_meta.name) is None
-        ]
+        res_labels = []
+        for label in labels:
+            if label.tags.get(self.tag_meta.name) is None:
+                label = label.add_tag(tag)
+            res_labels.append(label)
+        return res_labels
 
     def log_contents(self) -> None:
         cache = {

@@ -6,20 +6,15 @@ import src.process_funcs as process
 
 app = sly.Application(layout=layout.layout_card)
 
-# @app.event(sly.Event.ManualSelected.FigureChanged)
-# def figure_changed_cb(api: sly.Api, event: sly.Event.ManualSelected.FigureChanged):
-#     if event.tool != 'rectangle' or event.figure_id is None:
-#         layout.match_bbox_button.disable()
-#         return
-#     else:
-#         layout.match_bbox_button.enable()
-#     g.CACHE.cache_event(event)
 
-# @TODO: Add single bbox mode aswell v ^
 @app.event(sly.Event.ManualSelected.FigureChanged)
 def figure_changed_cb(api: sly.Api, event: sly.Event.ManualSelected.FigureChanged):
-    pass
-
+    if event.tool != "rectangle" or event.figure_id is None:
+        layout.match_bbox_button.disable()
+        return
+    else:
+        layout.match_bbox_button.enable()
+    g.CACHE.cache_event(event, cache_figure=True)
 
 @app.event(sly.Event.ManualSelected.ImageChanged)
 def image_changed_cb(api: sly.Api, event: sly.Event.ManualSelected.ImageChanged):
@@ -77,7 +72,5 @@ def match_click_cb():
         sly.fs.clean_dir(g.SLY_APP_DATA)
 
 
-# @TODO: don't process images with tag, docker image, modal window, check lightglue confidence,
-# add modal window option for resizing
-
-# to think through: meta is getting cached, and if updated, will be overwritten when processing code runs, leading to errors.
+# @TODO: docker image, modal window (resize option), check lightglue confidence,
+# to think through: meta is getting cached, and if updated by user, will be overwritten with older version of it when processing code runs, leading to errors.
