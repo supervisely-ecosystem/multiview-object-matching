@@ -35,7 +35,15 @@ def apply_lightglue_bounding_boxes(
     extractor = (
         SuperPoint(max_num_keypoints=max_num_keypoints, model_dir=g.MODEL_DIR).eval().to(device)
     )
-    matcher = LightGlue(features="superpoint", model_dir=g.MODEL_DIR).eval().to(device)
+    matcher = (
+        LightGlue(
+            features="superpoint",
+            filter_threshold=0.5,
+            model_dir=g.MODEL_DIR,
+        )
+        .eval()
+        .to(device)
+    )
 
     # * Load the reference image and extract features
     ref_image = load_image(reference_image_path).to(device)

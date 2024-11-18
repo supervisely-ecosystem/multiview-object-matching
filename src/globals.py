@@ -21,10 +21,8 @@ sly.fs.clean_dir(SLY_APP_DATA)
 MODEL_DIR = "./checkpoints"
 
 class Cache:
+
     def __init__(self):
-        self.project_metas: Dict[str, sly.ProjectMeta] = {}
-        self.project_meta: sly.ProjectMeta = None
-        self.project_settings: Dict = {}
         self.group_tag_id: int = None
         self.image_ann: sly.Annotation = None
         self.path_to_id: Dict[str, int] = {}
@@ -32,7 +30,17 @@ class Cache:
         self.tag_meta = sly.TagMeta(
             "bbox type", sly.TagValueType.ONEOF_STRING, ["reference", "matched"]
         )
+        # * Event attributes to cache
+        self.image_id = None
         self.figure_id = None
+        self.project_id = None
+        self.dataset_id = None
+        # * Other variables to cache
+        self.project_metas: Dict[str, sly.ProjectMeta] = {}
+        self.project_meta: sly.ProjectMeta = None
+        self.project_settings: Dict = {}
+        self.image_anns = {}
+        self.ann_needs_update = True
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
@@ -42,32 +50,35 @@ class Cache:
             return self.__dict__[name]
         raise AttributeError(f"'Cache' object has no attribute '{name}'")
 
-    def cache_project_meta(self) -> None:
-        project_id = self.project_id
+    def cache_project_meta(self, project_id: int) -> None:
         if project_id not in self.project_metas:
             project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
             self.project_metas[project_id] = project_meta
 
-            project_settings = api.project.get_settings(self.project_id)
+            project_settings = api.project.get_settings(project_id)
             self.project_settings[project_id] = project_settings
             self.group_tag_id = project_settings['groupImagesByTagId']
             self.project_meta = project_meta
 
+    def cache_image_ann(self, image_id) -> None:
+        ann = sly.Annotation.from_json(
+            api.annotation.download(image_id).annotation, self.project_meta
+        )
+        if ann is None:
+            sly.logger.error("Failed to download annotation.")
+            return
+        self.image_ann = ann
+
     @sly.timeit
-    def cache_event(self, event: sly.Event.ManualSelected.FigureChanged, cache_figure=False):
-        attrs_to_cache = [
-            "project_id",
-            "dataset_id",
-            "image_id",
-        ]
-        if cache_figure is True:
-            attrs_to_cache.append("figure_id")
-        else:
-            self.figure_id = None
+    def cache_event(self, event: sly.Event.ManualSelected.FigureChanged):
+        self.cache_project_meta(event.project_id)
+        if self.image_id != event.image_id or self.ann_needs_update:
+            self.cache_image_ann(event.image_id)
+
+        attrs_to_cache = ["project_id", "dataset_id", "image_id", "figure_id"]
         for k, v in event.__dict__.items():
             if k in attrs_to_cache:
                 self.__dict__[k] = v
-        self.cache_project_meta()
 
     def _get_group_imageinfos(self, tag_id, tag_value):
         filters = [
@@ -87,17 +98,20 @@ class Cache:
         ref_img_info = api.image.get_info_by_id(self.image_id)
         if self.group_tag_id is None:
             self.cache_project_meta()
-        group_tag_id = self.group_tag_id
 
         # get group tag's value
         group_tag_value = None
         for tag in ref_img_info.tags:
-            if tag[AF.TAG_ID] == group_tag_id:
+            if tag[AF.TAG_ID] == self.group_tag_id:
                 group_tag_value = tag[AF.VALUE]
                 break
 
         # to make sure reference image info is always first
-        image_infos = [ref_img_info] + [info for info in self._get_group_imageinfos(group_tag_id, group_tag_value) if info.id != self.image_id]
+        image_infos = [ref_img_info] + [
+            info
+            for info in self._get_group_imageinfos(self.group_tag_id, group_tag_value)
+            if info.id != self.image_id
+        ]
 
         path_to_id = {f"{SLY_APP_DATA}/{info.name}": info.id for info in image_infos}
         self.path_to_id = path_to_id
@@ -111,29 +125,9 @@ class Cache:
     @sly.timeit
     def get_reference_bbox_labels(self) -> List[sly.Label]:
         if self.figure_id is not None:
-            selected_label = api.annotation.get_label_by_id(self.figure_id, self.project_meta)
-            if selected_label is None:
-                sly.logger.warn("Selected label is not found")
-                return []
-            self.image_ann = sly.Annotation.from_json(
-                api.annotation.download(self.image_id).annotation, self.project_meta
-            )
-            return [selected_label]
-
-        ann = sly.Annotation.from_json(
-            api.annotation.download(self.image_id).annotation, self.project_meta
-        )
-        if ann is None:
-            sly.logger.warn("Failed to download annotation.")
-            return []
-        self.image_ann = ann
+            return [self.image_ann.get_label_by_id(self.figure_id)]
         return [
-            label
-            for label in ann.labels
-            if (
-                isinstance(label.geometry, sly.Rectangle)
-                and label.tags.get(self.tag_meta.name) is None
-            )
+            label for label in self.image_ann.labels if (isinstance(label.geometry, sly.Rectangle))
         ]
 
     @sly.timeit
@@ -150,11 +144,16 @@ class Cache:
         )
 
     @sly.timeit
-    def image_has_bboxes(self) -> bool:
-        bbox_labels = self.get_reference_bbox_labels()
+    def image_has_unprocessed_bboxes(self) -> bool:
+        bbox_labels = [
+            label
+            for label in self.get_reference_bbox_labels()
+            if label.tags.get(self.tag_meta.name) is None
+        ]
+
         if len(bbox_labels) == 0:
             sly.logger.debug(
-                "Selected image has no bbox labels, or all boxes are already processed"
+                "Selected image has no bbox labels, or all boxes on it are already processed"
             )
             return False
         return True
