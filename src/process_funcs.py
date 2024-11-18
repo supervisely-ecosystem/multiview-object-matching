@@ -28,40 +28,25 @@ def apply_lightglue_bounding_boxes(
     max_num_keypoints: int = 1024,
     device: str = "cpu",
 ):
+    # * Get reference image path first
     reference_image_path = image_paths.pop(0)
 
-    # Initialize feature extractor and matcher
+    # * Initialize feature extractor and matcher
     extractor = (
         SuperPoint(max_num_keypoints=max_num_keypoints, model_dir=g.MODEL_DIR).eval().to(device)
     )
     matcher = LightGlue(features="superpoint", model_dir=g.MODEL_DIR).eval().to(device)
 
-    # Load the reference image and extract features
+    # * Load the reference image and extract features
     ref_image = load_image(reference_image_path).to(device)
     ref_features = extractor.extract(ref_image, resize=256)
 
-    # Define reference bounding box points for each bbox in reference_bboxes
-    ref_bbox_points_list = [
-        (
-            bbox_label,
-            np.array(
-                [
-                    [bbox_label.geometry.left, bbox_label.geometry.top],  # Top-left corner
-                    [bbox_label.geometry.right, bbox_label.geometry.top],  # Top-right corner
-                    [bbox_label.geometry.right, bbox_label.geometry.bottom],  # Bottom-right
-                    [bbox_label.geometry.left, bbox_label.geometry.bottom],  # Bottom-left
-                ]
-            ).astype(np.float32),
-        )
-        for bbox_label in ref_bbox_labels
-    ]
-
+    # * Define reference bounding box points for each bbox in reference_bboxes
     id_to_labels = {}
 
-    # Process each target image
     for img_path in image_paths:
         ref_features_copy = deepcopy(ref_features)
-        # Load and process the current image
+        # * Load and extract the current image, resizing it to reduce processing times
         img = load_image(img_path).to(device)
         img_features = extractor.extract(img, resize=256)
 
@@ -74,7 +59,7 @@ def apply_lightglue_bounding_boxes(
             rbd(x) for x in [ref_features_copy, img_features, matches]
         ]
 
-        # Extract matched points
+        # * Extract matched points
         ref_matched_pts = ref_features_copy["keypoints"][matches["matches"][..., 0]].cpu().numpy()
         img_matched_pts = img_features["keypoints"][matches["matches"][..., 1]].cpu().numpy()
 
@@ -82,16 +67,25 @@ def apply_lightglue_bounding_boxes(
             sly.logger.warning(f"Not enough matches found for image {img_path}. Skipping.")
             continue
 
-        # Calculate the homography matrix between the reference and target image
+        # * Calculate the homography matrix between the reference and target image
         H, status = cv2.findHomography(ref_matched_pts, img_matched_pts, cv2.RANSAC, 5.0)
 
-        # Transform each bounding box in reference_bboxes
+        # * Transform original bounding boxes' points using cv2.PerspectiveTransform
         result_labels = []
-        for orig_label, ref_bbox_pts in ref_bbox_points_list:
-            transformed_pts = cv2.perspectiveTransform(np.array([ref_bbox_pts]), H)[0]
+        for orig_label in ref_bbox_labels:
+            geometry = orig_label.geometry
+            geom_array = np.array(
+                [
+                    [geometry.left, geometry.top],  # Top-left corner
+                    [geometry.right, geometry.top],  # Top-right corner
+                    [geometry.right, geometry.bottom],  # Bottom-right
+                    [geometry.left, geometry.bottom],  # Bottom-left
+                ]
+            ).astype(np.float32)
+            transformed_pts = cv2.perspectiveTransform(np.array([geom_array]), H)[0]
             result_labels.append(orig_label.clone(bbox_from_array(transformed_pts)))
 
-        # Store transformed bounding boxes with the image ID
+        # * Pass the result labels into a mapping
         img_id = g.CACHE.path_to_id[img_path]
         id_to_labels[img_id] = result_labels
 
