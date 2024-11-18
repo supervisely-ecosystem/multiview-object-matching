@@ -31,7 +31,7 @@ def figure_changed_cb(api: sly.Api, event: sly.Event.ManualSelected.FigureChange
 @app.event(sly.Event.ManualSelected.ImageChanged)
 def image_changed_cb(api: sly.Api, event: sly.Event.ManualSelected.ImageChanged):
     CACHE.cache_event(event)
-    if CACHE.image_has_unprocessed_bboxes() and CACHE.grouping_is_on():
+    if CACHE.image_has_unprocessed_bboxes():
         layout.match_bbox_button.enable()
     else:
         layout.match_bbox_button.disable()
@@ -41,6 +41,9 @@ def image_changed_cb(api: sly.Api, event: sly.Event.ManualSelected.ImageChanged)
 @sly.timeit
 def match_click_cb():
     # CACHE.log_contents()
+    if not CACHE.grouping_is_on():
+        sly.logger.error("Multiview mode must be enabled in order for application to work.")
+        return
     CACHE.add_tag_to_projmeta()
     device = layout.device_selector.get_device()
     if device is None:

@@ -125,9 +125,16 @@ class Cache:
     @sly.timeit
     def get_reference_bbox_labels(self) -> List[sly.Label]:
         if self.figure_id is not None:
-            return [self.image_ann.get_label_by_id(self.figure_id)]
+            label = self.image_ann.get_label_by_id(self.figure_id)
+            if label.tags.get(self.tag_meta.name) is not None:
+                return []
+            else:
+                return [label]
         return [
-            label for label in self.image_ann.labels if (isinstance(label.geometry, sly.Rectangle))
+            label
+            for label in self.image_ann.labels
+            if (isinstance(label.geometry, sly.Rectangle))
+            and label.tags.get(self.tag_meta.name) is None
         ]
 
     @sly.timeit
@@ -145,13 +152,7 @@ class Cache:
 
     @sly.timeit
     def image_has_unprocessed_bboxes(self) -> bool:
-        bbox_labels = [
-            label
-            for label in self.get_reference_bbox_labels()
-            if label.tags.get(self.tag_meta.name) is None
-        ]
-
-        if len(bbox_labels) == 0:
+        if len(self.get_reference_bbox_labels()) == 0:
             sly.logger.debug(
                 "Selected image has no bbox labels, or all boxes on it are already processed"
             )
