@@ -14,6 +14,7 @@ if sly.is_development():
 
 # * Creating an instance of the supervisely API according to the environment variables.
 api = sly.Api.from_env()
+box_id = 0
 
 # * Directories that will be used for checkpoints & temporary image storage
 SLY_APP_DATA = sly.app.get_data_dir()
@@ -23,24 +24,26 @@ MODEL_DIR = "./checkpoints"
 class Cache:
 
     def __init__(self):
-        self.group_tag_id: int = None
-        self.image_ann: sly.Annotation = None
-        self.path_to_id: Dict[str, int] = {}
-        self.reference_boxes: Dict[int, List[sly.Label]] = {}
-        self.tag_meta = sly.TagMeta(
-            "bbox type", sly.TagValueType.ONEOF_STRING, ["reference", "matched"]
-        )
-        # * Event attributes to cache
-        self.image_id = None
-        self.figure_id = None
-        self.project_id = None
-        self.dataset_id = None
-        # * Other variables to cache
+        # * Attributes that will be cached from events later
+        self.project_id: int = None
+        self.dataset_id: int = None
+        self.image_id: int = None
+        self.figure_id: int = None
+
+        # * Other attributes for caching
         self.project_metas: Dict[str, sly.ProjectMeta] = {}
         self.project_meta: sly.ProjectMeta = None
         self.project_settings: Dict = {}
-        self.image_anns = {}
-        self.ann_needs_update = True
+        self.ann_needs_update: bool = False
+
+        # * Attributes needed for processing
+        self.group_tag_id: int = None
+        self.image_ann: sly.Annotation = None
+        self.path_to_id: Dict[str, int] = {}
+        self.type_tag_meta = sly.TagMeta(
+            "bbox match type", sly.TagValueType.ONEOF_STRING, ["reference", "matched"]
+        )
+        self.id_tag_meta = sly.TagMeta("matched bbox ID", sly.TagValueType.ANY_NUMBER)
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
@@ -60,7 +63,7 @@ class Cache:
             self.group_tag_id = project_settings['groupImagesByTagId']
             self.project_meta = project_meta
 
-    def cache_image_ann(self, image_id) -> None:
+    def cache_image_ann(self, image_id: int) -> None:
         ann = sly.Annotation.from_json(
             api.annotation.download(image_id).annotation, self.project_meta
         )
@@ -70,7 +73,7 @@ class Cache:
         self.image_ann = ann
 
     @sly.timeit
-    def cache_event(self, event: sly.Event.ManualSelected.FigureChanged):
+    def cache_event(self, event: sly.Event.ManualSelected.FigureChanged) -> None:
         self.cache_project_meta(event.project_id)
         if self.image_id != event.image_id or self.ann_needs_update:
             self.cache_image_ann(event.image_id)
@@ -79,6 +82,18 @@ class Cache:
         for k, v in event.__dict__.items():
             if k in attrs_to_cache:
                 self.__dict__[k] = v
+        self.log_contents()
+
+    def log_contents(self) -> None:
+        attrs_to_log = [
+            "project_id",
+            "dataset_id",
+            "image_id",
+            "figure_id",
+            "group_tag_id",
+        ]
+        cache = {k: v for k, v in self.__dict__.items() if k in attrs_to_log}
+        sly.logger.debug(f"CACHE", extra=cache)
 
     def _get_group_imageinfos(self, tag_id, tag_value):
         filters = [
@@ -122,11 +137,10 @@ class Cache:
         api.image.download_paths(self.dataset_id, ids, paths)
         return paths
 
-    @sly.timeit
     def get_reference_bbox_labels(self) -> List[sly.Label]:
         if self.figure_id is not None:
             label = self.image_ann.get_label_by_id(self.figure_id)
-            if label.tags.get(self.tag_meta.name) is not None:
+            if label.tags.get(self.type_tag_meta.name) is not None:
                 return []
             else:
                 return [label]
@@ -134,11 +148,11 @@ class Cache:
             label
             for label in self.image_ann.labels
             if (isinstance(label.geometry, sly.Rectangle))
-            and label.tags.get(self.tag_meta.name) is None
+            and label.tags.get(self.type_tag_meta.name) is None
         ]
 
     @sly.timeit
-    def download_anns(self, ids) -> List[sly.Annotation]:
+    def download_anns(self, ids: List[int]) -> List[sly.Annotation]:
         return [
             sly.Annotation.from_json(ann.annotation, self.project_meta)
             for ann in api.annotation.download_batch(self.dataset_id, ids)
@@ -150,7 +164,6 @@ class Cache:
             project_settings["groupImages"] and project_settings["groupImagesByTagId"] is not None
         )
 
-    @sly.timeit
     def image_has_unprocessed_bboxes(self) -> bool:
         if len(self.get_reference_bbox_labels()) == 0:
             sly.logger.debug(
@@ -159,26 +172,28 @@ class Cache:
             return False
         return True
 
-    def add_tag_to_projmeta(self) -> None:
+    def add_tags_to_projmeta(self) -> None:
         project_meta = self.project_meta
-        if project_meta.get_tag_meta(self.tag_meta.name) is None:
-            project_meta = project_meta.add_tag_meta(self.tag_meta)
+        tag_metas = [self.type_tag_meta, self.id_tag_meta]
+        meta_needs_update = False
+        for tag_meta in tag_metas:
+            if project_meta.get_tag_meta(tag_meta.name) is None:
+                project_meta = project_meta.add_tag_meta(tag_meta)
+                meta_needs_update = True
+
+        if meta_needs_update:
             self.project_meta = api.project.update_meta(self.project_id, project_meta)
 
-    def add_tag_to_labels(self, labels: List[sly.Label], value: Literal["reference", "matched"]):
-        tag = sly.Tag(self.tag_meta, value)
+    def add_type_tag_to_labels(
+        self, labels: List[sly.Label], value: Literal["reference", "matched"]
+    ) -> List[sly.Label]:
+        type_tag = sly.Tag(self.type_tag_meta, value)
         res_labels = []
         for label in labels:
-            if label.tags.get(self.tag_meta.name) is None:
-                label = label.add_tag(tag)
+            if label.tags.get(self.type_tag_meta.name) is None:
+                label = label.add_tag(type_tag)
             res_labels.append(label)
         return res_labels
-
-    def log_contents(self) -> None:
-        cache = {
-            k: v for k, v in self.__dict__.items() if k not in ["project_metas", "project_meta"]
-        }
-        sly.logger.debug(f"CACHE", extra=cache)
 
 
 CACHE = Cache()
