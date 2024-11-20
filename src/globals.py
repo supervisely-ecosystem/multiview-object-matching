@@ -4,7 +4,7 @@ import supervisely as sly
 from supervisely.api.annotation_api import ApiField as AF
 import supervisely.app.development as development
 from typing import List, Dict, Literal
-from collections import defaultdict
+# from collections import defaultdict
 
 # # * Advanced debug mode
 if sly.is_development():
@@ -142,8 +142,7 @@ class Cache:
             label = self.image_ann.get_label_by_id(self.figure_id)
             if label.tags.get(self.type_tag_meta.name) is not None:
                 return []
-            else:
-                return [label]
+            return [label]
         return [
             label
             for label in self.image_ann.labels

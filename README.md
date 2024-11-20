@@ -1,6 +1,6 @@
 <div align="center" markdown>
 
-<img src="xxx"/>
+<img src="https://github.com/user-attachments/assets/179fbf6f-e23a-49af-8b2e-4e54f0365940"/>
 
 # Multiview Object Matching
 

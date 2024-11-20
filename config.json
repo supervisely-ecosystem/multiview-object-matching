@@ -8,10 +8,10 @@
     "images",
     "labelling"
   ],
-  "icon": "",
+  "icon": "https://github.com/user-attachments/assets/abee5aa3-76ca-4abf-87b9-35f45f978d06",
   "icon_cover": true,
   "headless": false,
-  "poster": "",
+  "poster": "https://github.com/user-attachments/assets/179fbf6f-e23a-49af-8b2e-4e54f0365940",
   "entrypoint": "python -m uvicorn src.main:app --host 0.0.0.0 --port 8000",
   "port": 8000,
   "context_menu": {

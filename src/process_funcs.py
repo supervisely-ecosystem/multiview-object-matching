@@ -20,6 +20,17 @@ def bbox_from_array(points):
     return sly.Rectangle(int(y_min), int(x_min), int(y_max), int(x_max))
 
 
+def bbox_to_array(geometry):
+    return np.array(
+        [
+            [geometry.left, geometry.top],  # Top-left corner
+            [geometry.right, geometry.top],  # Top-right corner
+            [geometry.right, geometry.bottom],  # Bottom-right
+            [geometry.left, geometry.bottom],  # Bottom-left
+        ]
+    ).astype(np.float32)
+
+
 def apply_lightglue(
     image_paths: List[str],
     max_num_keypoints: int = 1024,
@@ -75,19 +86,29 @@ def apply_lightglue(
 
 def apply_transform_to_bboxes(bbox_labels: List[sly.Label], ref_matched_pts, img_matched_pts):
     # * Calculate the homography matrix between the reference and target image
-    H, _ = cv2.findHomography(ref_matched_pts, img_matched_pts, cv2.RANSAC, 5.0)
+    H, _ = cv2.findHomography(ref_matched_pts, img_matched_pts, cv2.RANSAC)
 
     for orig_label in bbox_labels:
         geometry = orig_label.geometry
         # * Get numpy array from bounding box points
-        geom_array = np.array(
-            [
-                [geometry.left, geometry.top],  # Top-left corner
-                [geometry.right, geometry.top],  # Top-right corner
-                [geometry.right, geometry.bottom],  # Bottom-right
-                [geometry.left, geometry.bottom],  # Bottom-left
-            ]
-        ).astype(np.float32)
+        box_points = bbox_to_array(geometry)
         # * Transform original bounding boxes' points using cv2.PerspectiveTransform
-        transformed_pts = cv2.perspectiveTransform(np.array([geom_array]), H)[0]
+        transformed_pts = cv2.perspectiveTransform(np.array([box_points]), H)[0]
         yield orig_label.clone(bbox_from_array(transformed_pts))
+
+
+# def apply_transform_to_bboxes(bbox_labels: List[sly.Label], ref_matched_pts, img_matched_pts):
+#     # * Calculate the homography matrix between the reference and target image
+#     H, _ = cv2.findHomography(ref_matched_pts, img_matched_pts, cv2.RANSAC)
+
+#     for orig_label in bbox_labels:
+#         geometry = orig_label.geometry
+#         # * Get numpy array from bounding box points
+#         box_points = bbox_to_array(geometry)
+#         # * Transform original bounding boxes' points using cv2.PerspectiveTransform
+#         new_corners = []
+#         for corner in box_points:
+#             distances = np.linalg.norm(img_matched_pts - corner, axis=1)
+#             closest_idx = int(np.argmin(distances))
+#             new_corners.append(ref_matched_pts[closest_idx])
+#         yield orig_label.clone(bbox_from_array(np.array(new_corners)))
