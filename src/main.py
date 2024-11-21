@@ -74,7 +74,7 @@ def match_click_cb():
     image_ann = CACHE.image_ann
 
     ref_ann_labels = image_ann.labels
-    ref_bbox_labels = CACHE.get_reference_bbox_labels()
+    ref_boxes_labels = CACHE.get_reference_bbox_labels()
 
     device = layout.device_selector.get_device()
     if device is None:
@@ -82,7 +82,7 @@ def match_click_cb():
         device = "cpu"
 
     # to handle the case when there were boxes, but got deleted before processing
-    if len(ref_bbox_labels) == 0:
+    if len(ref_boxes_labels) == 0:
         sly.logger.error(
             "Selected image has no bbox labels, or all bboxes on it are already processed."
         )
@@ -92,37 +92,35 @@ def match_click_cb():
         image_paths = CACHE.download_group_images()
         sly.logger.info(
             f"Appying lightglue for {len(image_paths)} images on '{device.upper()}' device",
-            extra={"reference bboxes count": len(ref_bbox_labels)},
+            extra={"reference bboxes count": len(ref_boxes_labels)},
         )
 
         # * Apply lightglue to group images, log a warning if some images fail matching
-        matching_failed_cnt = 0
-        points_list = []
-        for i, pts in enumerate(process.apply_lightglue(image_paths, 1024, device)):
-            if pts is None:
-                image_paths.pop(i)
-                matching_failed_cnt += 1
-            else:
-                points_list.append(pts)
+        process_image_cnt = len(image_paths)
+        points_list = [pts for pts in process.apply_lightglue(image_paths, 1024, 512, device)]
 
-        assert len(image_paths) == len(
-            points_list
-        ), f"Got {len(points_list)} keypoint matches for {len(image_paths)} images"
-
-        if matching_failed_cnt > 0:
+        failed_imgs_cnt = (process_image_cnt - 1) - len(points_list)
+        if failed_imgs_cnt > 0:
             sly.logger.warning(
-                f"Matching failed for {matching_failed_cnt} image(s). They will be skipped."
+                f"Matching failed for {failed_imgs_cnt} image(s). They will be skipped."
             )
     except Exception as e:
         sly.logger.error(f"An error occured while processing bboxes: {e}")
+        sly.fs.clean_dir(g.SLY_APP_DATA)
+        return
     finally:
         # * Clear directory from downloaded image paths
-        sly.logger.debug(f"Cleaning {g.SLY_APP_DATA} directory from paths: {image_paths}")
+        sly.logger.debug(f"Cleaning {g.SLY_APP_DATA} directory from paths")
         sly.fs.clean_dir(g.SLY_APP_DATA)
 
     # * Transform reference boxes for group images using matching keypoints
+    # new_bbox_labels = [
+    #     process.apply_transform_to_bboxes(ref_boxes_labels, ref_pts, img_pts)
+    #     for ref_pts, img_pts in points_list
+    # ]
+
     new_bbox_labels = [
-        process.apply_transform_to_bboxes(ref_bbox_labels, ref_pts, img_pts)
+        process.transpose_bbox_with_keypoints(ref_boxes_labels, ref_pts, img_pts)
         for ref_pts, img_pts in points_list
     ]
 
@@ -136,7 +134,7 @@ def match_click_cb():
     # * Add type tag to reference boxes
     new_ref_ann_labels = []
     for label in ref_ann_labels:
-        if label in ref_bbox_labels:
+        if label in ref_boxes_labels:
             label = CACHE.add_type_tag_to_labels([label], "reference")[0]
         new_ref_ann_labels.append(label)
 

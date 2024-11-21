@@ -34,6 +34,7 @@ def bbox_to_array(geometry):
 def apply_lightglue(
     image_paths: List[str],
     max_num_keypoints: int = 1024,
+    resize=None,
     device: str = "cpu",
 ):
     # * Get reference image path first
@@ -46,7 +47,9 @@ def apply_lightglue(
     matcher = (
         LightGlue(
             features="superpoint",
-            filter_threshold=0.5,
+            # depth_confidence=-1,
+            # width_confidence=-1,
+            filter_threshold=0.3,
             model_dir=g.MODEL_DIR,
         )
         .eval()
@@ -55,38 +58,38 @@ def apply_lightglue(
 
     # * Load the reference image and extract features
     ref_image = load_image(reference_image_path).to(device)
-    ref_features = extractor.extract(ref_image, resize=256)
+    ref_features = extractor.extract(ref_image, resize=resize)
 
-    for img_path in image_paths:
+    for img_path in image_paths[:]:
         ref_features_copy = deepcopy(ref_features)
-        # * Load and extract the current image, resizing it to reduce processing times
         img = load_image(img_path).to(device)
-        img_features = extractor.extract(img, resize=256)
+        img_features = extractor.extract(img, resize=resize)
 
         try:
             matches = matcher({"image0": ref_features_copy, "image1": img_features})
         except Exception as e:
-            sly.logger.debug(f"Matching failed for image {img_path}: {e}")
-            yield None
+            sly.logger.warning(f"Matching failed for image {img_path}: {e}")
+            image_paths.remove(img_path)
             continue
+
         ref_features_copy, img_features, matches = [
             rbd(x) for x in [ref_features_copy, img_features, matches]
         ]
 
-        # * Extract matched points
         ref_matched_pts = ref_features_copy["keypoints"][matches["matches"][..., 0]].cpu().numpy()
         img_matched_pts = img_features["keypoints"][matches["matches"][..., 1]].cpu().numpy()
 
         if len(ref_matched_pts) < 4 or len(img_matched_pts) < 4:
-            sly.logger.debug(f"Not enough matches found for image {img_path}.")
-            yield None
+            sly.logger.warning(f"Not enough matches found for image {img_path}.")
+            image_paths.remove(img_path)
             continue
+
         yield (ref_matched_pts, img_matched_pts)
 
 
 def apply_transform_to_bboxes(bbox_labels: List[sly.Label], ref_matched_pts, img_matched_pts):
     # * Calculate the homography matrix between the reference and target image
-    H, _ = cv2.findHomography(ref_matched_pts, img_matched_pts, cv2.RANSAC)
+    H, _ = cv2.findHomography(ref_matched_pts, img_matched_pts)
 
     for orig_label in bbox_labels:
         geometry = orig_label.geometry
@@ -97,18 +100,31 @@ def apply_transform_to_bboxes(bbox_labels: List[sly.Label], ref_matched_pts, img
         yield orig_label.clone(bbox_from_array(transformed_pts))
 
 
-# def apply_transform_to_bboxes(bbox_labels: List[sly.Label], ref_matched_pts, img_matched_pts):
-#     # * Calculate the homography matrix between the reference and target image
-#     H, _ = cv2.findHomography(ref_matched_pts, img_matched_pts, cv2.RANSAC)
-
-#     for orig_label in bbox_labels:
-#         geometry = orig_label.geometry
-#         # * Get numpy array from bounding box points
-#         box_points = bbox_to_array(geometry)
-#         # * Transform original bounding boxes' points using cv2.PerspectiveTransform
-#         new_corners = []
-#         for corner in box_points:
-#             distances = np.linalg.norm(img_matched_pts - corner, axis=1)
-#             closest_idx = int(np.argmin(distances))
-#             new_corners.append(ref_matched_pts[closest_idx])
-#         yield orig_label.clone(bbox_from_array(np.array(new_corners)))
+def transpose_bbox_with_keypoints(
+    bbox_labels: List[sly.Label], ref_keypoints, img_keypoints, padding=5
+):
+    for orig_label in bbox_labels:
+        geometry = orig_label.geometry
+        box_points = bbox_to_array(geometry)
+        min_x, min_y = np.min(box_points, axis=0) - padding
+        max_x, max_y = np.max(box_points, axis=0) + padding
+        extended_bbox = np.array([[min_x, min_y], [max_x, min_y], [max_x, max_y], [min_x, max_y]])
+        in_bbox_keypoints = [
+            kp
+            for kp in ref_keypoints
+            if cv2.pointPolygonTest(extended_bbox.astype(np.float32), tuple(kp), False) >= 0
+        ]
+        if not in_bbox_keypoints:
+            continue
+        matched_idx = [
+            np.where((ref_keypoints == kp).all(axis=1))[0][0] for kp in in_bbox_keypoints
+        ]
+        matched_pts_ref = np.array(in_bbox_keypoints)
+        matched_pts_img = img_keypoints[matched_idx]
+        new_box_points = []
+        for box_point in box_points:
+            distances = np.linalg.norm(matched_pts_ref - box_point, axis=1)
+            nearest_idx = np.argmin(distances)
+            offset = matched_pts_img[nearest_idx] - matched_pts_ref[nearest_idx]
+            new_box_points.append(box_point + offset)
+        yield orig_label.clone(bbox_from_array(np.array(new_box_points)))
