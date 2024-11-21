@@ -19,5 +19,6 @@
       "ecosystem"
     ]
   },
-  "integrated_into": ["image_annotation_tool"]
+  "integrated_into": ["image_annotation_tool"],
+  "gpu": "preferred"
 }
