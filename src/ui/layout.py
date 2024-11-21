@@ -20,7 +20,9 @@ match_bbox_card = Card(
     match_bbox_button,
 )
 device_selector = SelectCudaDevice(sort_by_free_ram=True, include_cpu_option=True)
-device_selector_card = Card("Select Cuda Device", "Device which will be used for processing", True, device_selector)
+device_selector_card = Card(
+    "Select Computation Device", "Device which will be used for processing", True, device_selector
+)
 device_selector_card.collapse()
 resize_check = Checkbox(Text("Resize"), True)
 max_keypoints_inputnum = InputNumber(1024, 0, 2048, 256)
