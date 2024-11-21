@@ -77,7 +77,7 @@ def apply_lightglue(
         try:
             matches = matcher({"image0": ref_features_copy, "image1": img_features})
         except Exception as e:
-            sly.logger.warning(f"Matching failed for image {img_path}: {e}")
+            sly.logger.debug(f"Matching failed for image {img_path}: {e}")
             image_paths.remove(img_path)
             continue
 
