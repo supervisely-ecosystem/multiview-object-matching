@@ -4,7 +4,6 @@ import supervisely as sly
 from supervisely.api.annotation_api import ApiField as AF
 import supervisely.app.development as development
 from typing import List, Dict, Literal
-# from collections import defaultdict
 
 # # * Advanced debug mode
 if sly.is_development():
@@ -114,7 +113,6 @@ class Cache:
         if self.group_tag_id is None:
             self.cache_project_meta()
 
-        # get group tag's value
         group_tag_value = None
         for tag in ref_img_info.tags:
             if tag[AF.TAG_ID] == self.group_tag_id:

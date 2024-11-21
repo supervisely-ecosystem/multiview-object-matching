@@ -8,7 +8,7 @@ import src.globals as g
 from copy import deepcopy
 
 
-def bbox_from_array(points):
+def bbox_from_array(points: np.array) -> sly.Rectangle:
     """
     Converts numpy array to Supervisely Rectangle object.
     """
@@ -20,7 +20,10 @@ def bbox_from_array(points):
     return sly.Rectangle(int(y_min), int(x_min), int(y_max), int(x_max))
 
 
-def bbox_to_array(geometry):
+def bbox_to_array(geometry: sly.Rectangle) -> np.array:
+    """
+    Converts Supervisely Rectangle object to numpy array.
+    """
     return np.array(
         [
             [geometry.left, geometry.top],  # Top-left corner
@@ -38,6 +41,10 @@ def apply_lightglue(
     filter_threshold=0.3,
     device: str = "cpu",
 ):
+    """
+    Generator function to apply LightGlue to image paths
+    """
+
     # * Get reference image path first
     reference_image_path = image_paths.pop(0)
 
@@ -88,22 +95,25 @@ def apply_lightglue(
         yield (ref_matched_pts, img_matched_pts)
 
 
-def apply_transform_to_bboxes(bbox_labels: List[sly.Label], ref_matched_pts, img_matched_pts):
-    # * Calculate the homography matrix between the reference and target image
-    H, _ = cv2.findHomography(ref_matched_pts, img_matched_pts)
+# def apply_transform_to_bboxes(bbox_labels: List[sly.Label], ref_matched_pts, img_matched_pts):
+#     # * Calculate the homography matrix between the reference and target image
+#     H, _ = cv2.findHomography(ref_matched_pts, img_matched_pts)
 
-    for orig_label in bbox_labels:
-        geometry = orig_label.geometry
-        # * Get numpy array from bounding box points
-        box_points = bbox_to_array(geometry)
-        # * Transform original bounding boxes' points using cv2.PerspectiveTransform
-        transformed_pts = cv2.perspectiveTransform(np.array([box_points]), H)[0]
-        yield orig_label.clone(bbox_from_array(transformed_pts))
+#     for orig_label in bbox_labels:
+#         geometry = orig_label.geometry
+#         # * Get numpy array from bounding box points
+#         box_points = bbox_to_array(geometry)
+#         # * Transform original bounding boxes' points using cv2.PerspectiveTransform
+#         transformed_pts = cv2.perspectiveTransform(np.array([box_points]), H)[0]
+#         yield orig_label.clone(bbox_from_array(transformed_pts))
 
 
 def transpose_bbox_with_keypoints(
     bbox_labels: List[sly.Label], ref_keypoints, img_keypoints, padding=5
 ):
+    """
+    Generator function to transpose bounding boxes to images using keypoints
+    """
     for orig_label in bbox_labels:
         geometry = orig_label.geometry
         box_points = bbox_to_array(geometry)

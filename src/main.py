@@ -60,18 +60,23 @@ def image_changed_cb(api: sly.Api, event: sly.Event.ManualSelected.ImageChanged)
 @layout.match_bbox_button.click
 @sly.timeit
 def match_click_cb():
-    if not CACHE.grouping_is_on():
-        sly.logger.error("Multiview mode must be enabled in order for application to work.")
-        return
-
+    # * Get UI widget values
     resize_value = None
     if layout.resize_check.is_checked():
         resize_value = layout.resize_inputnum.get_value()
+
     max_keypoints = layout.max_keypoints_inputnum.get_value()
     filter_threshold = layout.filter_threshold.get_value()
+
+    device = layout.device_selector.get_device()
+    if device is None:
+        sly.logger.error("No processing device found, trying to run on CPU...")
+        device = "cpu"
+
     sly.logger.debug(
         "Matching with LightGlue params",
         extra={
+            "device": device,
             "resize": resize_value,
             "max keypoints": max_keypoints,
             "filter threshold": filter_threshold,
@@ -83,24 +88,20 @@ def match_click_cb():
 
     # * Add tag metas to project meta to later add tags to matched boxes
     CACHE.add_tags_to_projmeta()
+
     # * Get latest reference image annotation, as it could have been updated since it was last retrieved
     CACHE.cache_image_ann(image_id)
     image_ann = CACHE.image_ann
 
     ref_ann_labels = image_ann.labels
     ref_boxes_labels = CACHE.get_reference_bbox_labels()
-
-    device = layout.device_selector.get_device()
-    if device is None:
-        sly.logger.error("No processing device found, trying to run on CPU...")
-        device = "cpu"
-
     # to handle the case when there were boxes, but got deleted before processing
     if len(ref_boxes_labels) == 0:
         sly.logger.error(
             "Selected image has no bbox labels, or all bboxes on it are already processed."
         )
         return
+
     try:
         # * Download images from grouping
         image_paths = CACHE.download_group_images()
@@ -109,7 +110,7 @@ def match_click_cb():
             extra={"reference bboxes count": len(ref_boxes_labels)},
         )
 
-        # * Apply lightglue to group images, log a warning if some images fail matching
+        # * Apply lightglue to group images
         process_image_cnt = len(image_paths)
         points_list = [
             pts
@@ -118,6 +119,7 @@ def match_click_cb():
             )
         ]
 
+        # * Check if any images failed matching, and print a log if so
         failed_imgs_cnt = (process_image_cnt - 1) - len(points_list)
         if failed_imgs_cnt > 0:
             sly.logger.warning(
@@ -128,16 +130,10 @@ def match_click_cb():
         sly.fs.clean_dir(g.SLY_APP_DATA)
         return
     finally:
-        # * Clear directory from downloaded image paths
         sly.logger.debug(f"Cleaning {g.SLY_APP_DATA} directory from paths")
         sly.fs.clean_dir(g.SLY_APP_DATA)
 
-    # * Transform reference boxes for group images using matching keypoints
-    # new_bbox_labels = [
-    #     process.apply_transform_to_bboxes(ref_boxes_labels, ref_pts, img_pts)
-    #     for ref_pts, img_pts in points_list
-    # ]
-
+    # * Transpose reference boxes to group images using matching keypoints
     new_bbox_labels = [
         process.transpose_bbox_with_keypoints(ref_boxes_labels, ref_pts, img_pts)
         for ref_pts, img_pts in points_list
@@ -175,9 +171,3 @@ def match_click_cb():
     anns_to_upload = [new_ref_ann] + anns
     sly.logger.info(f"Uploading {len(anns_to_upload)} annotations...")
     g.api.annotation.upload_anns(ids_to_upload, anns_to_upload)
-
-
-# @TODO: modal window, docker
-# to fix: whacky disabling of match boxes button
-# to think through: meta is getting cached, and if updated by user, will be overwritten with older version of it when processing code runs, leading to errors.
-# to check: bug when an exception rises while processing, and labeling toolbox defaults
