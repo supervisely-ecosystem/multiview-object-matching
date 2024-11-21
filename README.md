@@ -27,17 +27,17 @@ This application uses [LightGlue](https://github.com/cvg/LightGlue) (ICCV 2023).
 
 ## How To Run
 
-**Step 1:** Run the application from Ecosystem
+**Step 1:** Open Image Labeling Toolbox, select `Apps` tab and run the Application
 
 IMAGE_HERE<br><br>
 
-**Step 2:** Open Image Labeling Toolbox<br><br>
+**Step 2:** Select image/bounding box of interest<br><br>
 
-**Step 3:** Select `Apps` tab, open the Application
+**Step 3: Optional** Configure processing device, and LightGlue settings
 
 IMAGE_HERE<br><br>
 
-**Step 4:** Select image/bounding box of interest, and click `MATCH BBOXES` button
+**Step 4:** Click `MATCH BBOXES` button
 
 IMAGE_HERE<br><br>
 
