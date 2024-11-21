@@ -43,4 +43,4 @@ After finishing using the app, don't forget to stop the app session manually in 
 
 ## Acknowledgements
 
-This app is based on the great work [LightGlue](https://github.com/cvg/LightGlue)
+This app is based on the great work [LightGlue](https://github.com/cvg/LightGlue)![GitHub Org's stars](https://img.shields.io/github/stars/cvg/LightGlue?style=social)

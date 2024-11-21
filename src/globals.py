@@ -65,9 +65,15 @@ class Cache:
             self.project_meta = project_meta
 
     def cache_image_ann(self, image_id: int) -> None:
-        ann = sly.Annotation.from_json(
-            api.annotation.download(image_id).annotation, self.project_meta
-        )
+        try:
+            ann = sly.Annotation.from_json(
+                api.annotation.download(image_id).annotation, self.project_meta
+            )
+        except:
+            self.cache_project_meta(self.project_id)
+            ann = sly.Annotation.from_json(
+                api.annotation.download(image_id).annotation, self.project_meta
+            )
         if ann is None:
             sly.logger.error("Failed to download annotation.")
             return
