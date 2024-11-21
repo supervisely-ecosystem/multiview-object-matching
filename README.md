@@ -21,6 +21,8 @@
 
 **Multiview Object Matching** is an image labeling toolbox application made for matching bounding boxes across multiview images. App works both from selected bounding box object, and from all bounding boxes on an image. Once the image/bbox is selected and `MATCH BBOXES` button is pressed, all other images in the multiview group will be updated with matched bounding boxes.
 
+Application only works with Multi-view images projects. Find more info on them [here](https://developer.supervisely.com/getting-started/python-sdk-tutorials/images/multiview-images).
+
 ## LightGlue
 
 This application uses [LightGlue](https://github.com/cvg/LightGlue) (ICCV 2023). A lightweight neural network designed for image feature matching. It is used in conjunction with a feature descriptor, specifically, **SuperPoint**. LightGlue and SuperPoint form a powerful pipeline for various computer vision tasks such as image matching and localization. It achieves state-of-the-art performance on several benchmarks while being faster than previous methods.
