@@ -63,6 +63,7 @@ def apply_lightglue(
         .eval()
         .to(device)
     )
+    g.api.task.set_output_text(g.task_id, "Application is started.")
 
     # * Load the reference image and extract features
     ref_image = load_image(reference_image_path).to(device)

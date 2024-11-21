@@ -10,6 +10,8 @@ if sly.is_development():
     load_dotenv("local.env")
     load_dotenv(os.path.expanduser("~/supervisely.env"))
     development.enable_advanced_debug()
+else:
+    task_id = sly.env.task_id()
 
 # * Creating an instance of the supervisely API according to the environment variables.
 api = sly.Api.from_env()
