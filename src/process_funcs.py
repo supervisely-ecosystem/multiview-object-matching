@@ -35,6 +35,7 @@ def apply_lightglue(
     image_paths: List[str],
     max_num_keypoints: int = 1024,
     resize=None,
+    filter_threshold=0.3,
     device: str = "cpu",
 ):
     # * Get reference image path first
@@ -49,7 +50,7 @@ def apply_lightglue(
             features="superpoint",
             # depth_confidence=-1,
             # width_confidence=-1,
-            filter_threshold=0.3,
+            filter_threshold=filter_threshold,
             model_dir=g.MODEL_DIR,
         )
         .eval()

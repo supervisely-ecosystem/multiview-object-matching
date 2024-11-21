@@ -64,6 +64,20 @@ def match_click_cb():
         sly.logger.error("Multiview mode must be enabled in order for application to work.")
         return
 
+    resize_value = None
+    if layout.resize_check.is_checked():
+        resize_value = layout.resize_inputnum.get_value()
+    max_keypoints = layout.max_keypoints_inputnum.get_value()
+    filter_threshold = layout.filter_threshold.get_value()
+    sly.logger.debug(
+        "Matching with LightGlue params",
+        extra={
+            "resize": resize_value,
+            "max keypoints": max_keypoints,
+            "filter threshold": filter_threshold,
+        },
+    )
+
     image_id = CACHE.image_id
     id_tag_meta = CACHE.id_tag_meta
 
@@ -97,7 +111,12 @@ def match_click_cb():
 
         # * Apply lightglue to group images, log a warning if some images fail matching
         process_image_cnt = len(image_paths)
-        points_list = [pts for pts in process.apply_lightglue(image_paths, 1024, 512, device)]
+        points_list = [
+            pts
+            for pts in process.apply_lightglue(
+                image_paths, max_keypoints, resize_value, filter_threshold, device
+            )
+        ]
 
         failed_imgs_cnt = (process_image_cnt - 1) - len(points_list)
         if failed_imgs_cnt > 0:
@@ -158,7 +177,7 @@ def match_click_cb():
     g.api.annotation.upload_anns(ids_to_upload, anns_to_upload)
 
 
-# @TODO: modal win, docker, poster & icon
+# @TODO: modal window, docker
+# to fix: whacky disabling of match boxes button
 # to think through: meta is getting cached, and if updated by user, will be overwritten with older version of it when processing code runs, leading to errors.
-# to fix: re-cache meta when settings updated
 # to check: bug when an exception rises while processing, and labeling toolbox defaults
