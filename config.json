@@ -4,6 +4,7 @@
   "name": "Multiview Bbox Matching",
   "description": "Propagate bboxes to multiview images group",
   "docker_image": "supervisely/multiview-object-matching:0.0.1",
+  "instance_version": "6.12.5",
   "categories": [
     "images",
     "labelling"
