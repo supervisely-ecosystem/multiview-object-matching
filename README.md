@@ -1,8 +1,8 @@
 <div align="center" markdown>
 
-<img src="https://github.com/user-attachments/assets/179fbf6f-e23a-49af-8b2e-4e54f0365940"/>
+<img src="https://github.com/user-attachments/assets/5e7e931e-376c-4066-baaf-2b750e000649"/>
 
-# Multiview Bbox Matching
+# Multiview Object Matching
 
 <p align="center">
   <a href="#Overview">Overview</a> •
@@ -19,7 +19,7 @@
 
 ## Overview
 
-**Multiview Bbox Matching** is an image labeling toolbox application made for matching bounding boxes across multiview images. App works both from selected bounding box object, and from all bounding boxes on an image. Once the image/bbox is selected and `MATCH BBOXES` button is pressed, all other images in the multiview group will be updated with matched bounding boxes.
+**Multiview Object Matching** is an image labeling toolbox application made for matching bounding boxes across multiview images. App works both from selected bounding box object, and from all bounding boxes on an image. Once the image/bbox is selected and `MATCH BBOXES` button is pressed, all other images in the multiview group will be updated with matched bounding boxes.
 
 ## LightGlue
 
