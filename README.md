@@ -29,17 +29,15 @@ This application uses [LightGlue](https://github.com/cvg/LightGlue) (ICCV 2023).
 
 **Step 1:** Open Image Labeling Toolbox, select `Apps` tab and run the Application
 
-IMAGE_HERE<br><br>
+<img src="https://github.com/user-attachments/assets/5d379f64-eadc-44ad-b137-e9bd0fd3967e"/><br><br>
 
 **Step 2:** Select image/bounding box of interest<br><br>
 
 **Step 3: Optional** Configure processing device, and LightGlue settings
 
-IMAGE_HERE<br><br>
-
 **Step 4:** Click `MATCH BBOXES` button
 
-IMAGE_HERE<br><br>
+<img src="https://github.com/user-attachments/assets/53a804a5-9185-4800-99ed-4f5153f88068"/><br><br>
 
 After finishing using the app, don't forget to stop the app session manually in the App Sessions.
 
