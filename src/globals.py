@@ -139,9 +139,10 @@ class Cache:
         if self.figure_id is not None:
             label = self.image_ann.get_label_by_id(self.figure_id)
             if label is None:
-                sly.logger.debug(f"Figure (id: {self.figure_id}) not found in the image annotation")
-                self.image_ann = self.cache_image_ann(self.image_id)
-                label = self.image_ann.get_label_by_id(self.figure_id)
+                sly.logger.warning(
+                    f"Figure (id: {self.figure_id}) not found in the image annotation"
+                )
+                return []
             if label.tags.get(self.type_tag_meta.name) is not None:
                 return []
             return [label]
