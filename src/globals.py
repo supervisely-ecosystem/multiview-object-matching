@@ -138,6 +138,10 @@ class Cache:
     def get_reference_bbox_labels(self) -> List[sly.Label]:
         if self.figure_id is not None:
             label = self.image_ann.get_label_by_id(self.figure_id)
+            if label is None:
+                sly.logger.debug(f"Figure (id: {self.figure_id}) not found in the image annotation")
+                self.image_ann = self.cache_image_ann(self.image_id)
+                label = self.image_ann.get_label_by_id(self.figure_id)
             if label.tags.get(self.type_tag_meta.name) is not None:
                 return []
             return [label]
