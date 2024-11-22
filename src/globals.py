@@ -70,6 +70,7 @@ class Cache:
                 api.annotation.download(image_id).annotation, self.project_meta
             )
         except:
+            self.project_metas.pop(self.project_id)
             self.cache_project_meta(self.project_id)
             ann = sly.Annotation.from_json(
                 api.annotation.download(image_id).annotation, self.project_meta

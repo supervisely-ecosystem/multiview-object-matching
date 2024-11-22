@@ -13,8 +13,6 @@ def figure_created_cb(api: sly.Api, event: sly.Event.FigureCreated):
         CACHE.ann_needs_update = True
 
     CACHE.cache_event(event)
-    if CACHE.project_meta.get_obj_class_by_id(event.figure_class_id) is None:
-        CACHE.cache_project_meta(event.project_id)
 
     if CACHE.image_has_unprocessed_bboxes() and CACHE.grouping_is_on():
         layout.match_bbox_button.enable()
