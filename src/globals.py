@@ -34,7 +34,7 @@ class Cache:
         # * Other attributes for caching
         self.project_metas: Dict[str, sly.ProjectMeta] = {}
         self.project_meta: sly.ProjectMeta = None
-        self.project_settings: Dict = {}
+        self.project_settings = None
         self.ann_needs_update: bool = False
 
         # * Attributes needed for processing
@@ -58,10 +58,8 @@ class Cache:
         if project_id not in self.project_metas:
             project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
             self.project_metas[project_id] = project_meta
-
-            project_settings = api.project.get_settings(project_id)
-            self.project_settings[project_id] = project_settings
-            self.group_tag_id = project_settings['groupImagesByTagId']
+            self.project_settings = project_meta.project_settings
+            self.group_tag_id = self.project_settings["groupImagesByTagId"]
             self.project_meta = project_meta
 
     def cache_image_ann(self, image_id: int) -> None:
