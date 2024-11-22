@@ -56,7 +56,7 @@ class Cache:
 
     def cache_project_meta(self, project_id: int) -> None:
         if project_id not in self.project_metas:
-            project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
+            project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id, True))
             self.project_metas[project_id] = project_meta
             self.project_settings = project_meta.project_settings
             self.group_tag_id = self.project_settings["groupImagesByTagId"]
