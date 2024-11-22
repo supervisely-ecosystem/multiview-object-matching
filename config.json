@@ -15,11 +15,6 @@
   "poster": "https://github.com/user-attachments/assets/5e7e931e-376c-4066-baaf-2b750e000649",
   "entrypoint": "python -m uvicorn src.main:app --host 0.0.0.0 --port 8000",
   "port": 8000,
-  "context_menu": {
-    "target": [
-      "ecosystem"
-    ]
-  },
   "integrated_into": ["image_annotation_tool"],
   "gpu": "preferred"
 }
