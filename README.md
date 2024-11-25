@@ -54,7 +54,7 @@ There is a couple of ways you could get Multiview project:
 <details>
   <summary> Import Multi-view Project </summary> <br>
 
-  Multi-view images projects could also be imported via [Import images groups](https://ecosystem.supervisely.com/ecosystem/apps/import-images-groups) application. Just drag & drop the archive. If you don't have a project at your disposal, download a sample [here](https://dev.supervisely.com/h5un6l2bnaz1vj8a9qgms4-public/teams_storage/1/7/Zh/ure6WOaV7EfQirnGD3BqX3GCg7bchFzabQwVWOW74oKqIKx9V4yXMeOvz8gyQUtOpoS8VVowQ7zjmpRslFodjAvMiBNER49aQh3gnUqE45cLIa0ZlkicQ0GrS8FU.tar).
+  Multi-view images projects could also be imported via [Import images groups](https://ecosystem.supervisely.com/ecosystem/apps/import-images-groups) application. Just drag & drop the archive. If you don't have a project at your disposal, download a [sample](https://dev.supervisely.com/h5un6l2bnaz1vj8a9qgms4-public/teams_storage/c/0/VR/C6PkYTS9XenMd9cLl9Yb4TGOdx7gJk6xXJ9rQpkuy5GnD0cbxG0QbWadvbEJElOD1rHppc1LJFSlvP20TMbRXdAuiMySTeNMwTkotXoMFLaebFavIaHbaAjUjl2G.tar).
 </details>
 
 <details> 
@@ -80,6 +80,10 @@ There is a couple of ways you could get Multiview project:
 <img src="https://github.com/user-attachments/assets/9094dc44-1494-4348-997b-ab8b5dd56103"/><br><br>
 
 After finishing using the app, don't forget to stop the app session manually in the App Sessions.
+
+## Usage example: Match Image bboxes
+
+
 
 ## Acknowledgements
 
