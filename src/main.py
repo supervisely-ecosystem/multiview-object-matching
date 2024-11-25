@@ -64,6 +64,8 @@ def match_click_cb():
         resize_value = layout.resize_inputnum.get_value()
 
     max_keypoints = layout.max_keypoints_inputnum.get_value()
+    if max_keypoints == 0:
+        max_keypoints = None
     filter_threshold = layout.filter_threshold.get_value()
 
     device = layout.device_selector.get_device()

@@ -81,7 +81,7 @@ There is a couple of ways you could get Multiview project:
 
 After finishing using the app, don't forget to stop the app session manually in the App Sessions.
 
-## Usage example: Match Image bboxes
+## Usage example: Match all boxes at once
 
 
 

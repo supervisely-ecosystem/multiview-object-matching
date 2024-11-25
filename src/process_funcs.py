@@ -110,7 +110,7 @@ def apply_lightglue(
 
 
 def transpose_bbox_with_keypoints(
-    bbox_labels: List[sly.Label], ref_keypoints, img_keypoints, padding=5
+    bbox_labels: List[sly.Label], ref_keypoints, img_keypoints, padding=0
 ):
     """
     Generator function to transpose bounding boxes to images using keypoints
