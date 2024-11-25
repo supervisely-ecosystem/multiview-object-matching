@@ -6,7 +6,10 @@
 
 <p align="center">
   <a href="#Overview">Overview</a> •
-  <a href="#How-To-Run">How To Run</a>
+  <a href="Lightglue">Lightglue</a> •
+  <a href="#How-To-Run">How To Run</a> •
+  <a href="#usage-example-match-all-boxes-at-once">Usage Example</a> •
+  <a href="#acknowledgements">Acknowledgements</a>
 </p>
 
 [![](https://img.shields.io/badge/supervisely-ecosystem-brightgreen)](https://ecosystem.supervisely.com/apps/supervisely-ecosystem/multiview-object-matching)
@@ -81,9 +84,9 @@ There is a couple of ways you could get Multiview project:
 
 After finishing using the app, don't forget to stop the app session manually in the App Sessions.
 
-## Usage example: Match Image bboxes
+## Usage example: Match all boxes at once
 
-
+![gif](https://github.com/user-attachments/assets/d37a5f00-8afb-44c1-a950-1f3c580563f6)
 
 ## Acknowledgements
 

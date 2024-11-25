@@ -30,7 +30,8 @@ max_keypoints_field = Field(
     max_keypoints_inputnum,
     "Max Keypoints",
     "Maximum keypoints amount for an image. "
-    "To increase the speed with a small drop of accuracy, decrease the number of keypoints",
+    "To increase the speed with a small drop of accuracy, decrease the number of keypoints. "
+    "Set 0 to disable the option, allowing lightglue to find as many keypoints as it can",
 )
 resize_inputnum = InputNumber(256, 128, 1024, 128)
 resize_field = Field(
