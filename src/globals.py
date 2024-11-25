@@ -59,7 +59,7 @@ class Cache:
             project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id, True))
             self.project_metas[project_id] = project_meta
             self.project_settings = project_meta.project_settings
-            self.group_tag_id = self.project_settings["groupImagesByTagId"]
+            self.group_tag_id = self.project_settings.multiview_tag_id
             self.project_meta = project_meta
 
     def cache_image_ann(self, image_id: int) -> None:
@@ -169,10 +169,8 @@ class Cache:
         ]
 
     def grouping_is_on(self) -> bool:
-        project_settings = self.project_settings[self.project_id]
-        return (
-            project_settings["groupImages"] and project_settings["groupImagesByTagId"] is not None
-        )
+        project_settings: sly.ProjectSettings = self.project_settings[self.project_id]
+        return project_settings.multiview_enabled and project_settings.multiview_tag_id is not None
 
     def image_has_unprocessed_bboxes(self) -> bool:
         if len(self.get_reference_bbox_labels()) == 0:
