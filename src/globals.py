@@ -38,7 +38,6 @@ class Cache:
         self.ann_needs_update: bool = False
 
         # * Attributes needed for processing
-        self.group_tag_id: int = None
         self.image_ann: sly.Annotation = None
         self.path_to_id: Dict[str, int] = {}
         self.type_tag_meta = sly.TagMeta(
@@ -59,7 +58,6 @@ class Cache:
             project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id, True))
             self.project_metas[project_id] = project_meta
             self.project_settings = project_meta.project_settings
-            self.group_tag_id = self.project_settings["groupImagesByTagId"]
             self.project_meta = project_meta
 
     def cache_image_ann(self, image_id: int) -> None:
@@ -118,19 +116,18 @@ class Cache:
     @sly.timeit
     def download_group_images(self) -> List[str]:
         ref_img_info = api.image.get_info_by_id(self.image_id)
-        if self.group_tag_id is None:
-            self.cache_project_meta()
-
         group_tag_value = None
         for tag in ref_img_info.tags:
-            if tag[AF.TAG_ID] == self.group_tag_id:
+            if tag[AF.TAG_ID] == self.project_settings.multiview_tag_id:
                 group_tag_value = tag[AF.VALUE]
                 break
 
         # to make sure reference image info is always first
         image_infos = [ref_img_info] + [
             info
-            for info in self._get_group_imageinfos(self.group_tag_id, group_tag_value)
+            for info in self._get_group_imageinfos(
+                self.project_settings.multiview_tag_id, group_tag_value
+            )
             if info.id != self.image_id
         ]
 
@@ -169,9 +166,9 @@ class Cache:
         ]
 
     def grouping_is_on(self) -> bool:
-        project_settings = self.project_settings[self.project_id]
         return (
-            project_settings["groupImages"] and project_settings["groupImagesByTagId"] is not None
+            self.project_settings.multiview_enabled
+            and self.project_settings.multiview_tag_id is not None
         )
 
     def image_has_unprocessed_bboxes(self) -> bool:
