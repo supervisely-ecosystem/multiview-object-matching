@@ -19,9 +19,8 @@
 
 ## Overview
 
-**Multiview Object Matching** is an image labeling toolbox application made for matching bounding boxes across multiview images. App works both from selected bounding box object, and from all bounding boxes on an image. Once the image/bbox is selected and `MATCH BBOXES` button is pressed, all other images in the multiview group will be updated with matched bounding boxes.
+**Multiview Object Matching** is an image labeling toolbox application made for matching bounding boxes across multiview image groups. App works both from selected bounding box object, and from all bounding boxes on an image. Once the image/bbox is selected and `MATCH BBOXES` button is pressed, all images in the multiview group will be updated with matched bounding boxes.
 
-Application only works with Multi-view images projects. Find more info on them [here](https://developer.supervisely.com/getting-started/python-sdk-tutorials/images/multiview-images).
 
 ## LightGlue
 
@@ -29,17 +28,56 @@ This application uses [LightGlue](https://github.com/cvg/LightGlue) (ICCV 2023).
 
 ## How To Run
 
+**Step 0:** Prepare Multi-view images project. <br>
+
+Application only works with Multi-view images projects.
+There is a couple of ways you could get Multiview project:
+<details>
+  <summary>Create a new project</summary> <br>
+
+  When creating a new project, select this option:
+
+  <img src="https://github.com/user-attachments/assets/7830c806-1f82-4cbd-93ba-c335c61324ab"/><br>
+
+  After that, any images that you import will be grouped for multi-view labeling.
+</details>
+
+<details>
+  <summary>Group Images for Multiview Labeling Application </summary> <br>
+
+  You could run [this application](https://ecosystem.supervisely.com/apps/group-images-for-multiview-labeling) on your existing project to group images for multi-view labeling.
+  Application allows to group images by tags, instances of object classes, or simply by batches (just a number of images).
+
+  <img src="https://github.com/user-attachments/assets/8c983c14-ab70-46ce-ab29-fb930a6e7864"/><br>
+</details>
+
+<details>
+  <summary> Import Multi-view Project </summary> <br>
+
+  Multi-view images projects could also be imported via [Import images groups](https://ecosystem.supervisely.com/ecosystem/apps/import-images-groups) application. Just drag & drop the archive. If you don't have a project at your disposal, download a sample [here](https://dev.supervisely.com/h5un6l2bnaz1vj8a9qgms4-public/teams_storage/1/7/Zh/ure6WOaV7EfQirnGD3BqX3GCg7bchFzabQwVWOW74oKqIKx9V4yXMeOvz8gyQUtOpoS8VVowQ7zjmpRslFodjAvMiBNER49aQh3gnUqE45cLIa0ZlkicQ0GrS8FU.tar).
+</details>
+
+<details> 
+  <summary> Create multi-view project with python </summary> <br>
+
+  To create multi-view images project with Supervisely's SDK, follow the [tutorial](https://developer.supervisely.com/getting-started/python-sdk-tutorials/images/multiview-images) in our developer portal.
+  </details> <br>
+
 **Step 1:** Open Image Labeling Toolbox, select `Apps` tab and run the Application
 
-<img src="https://github.com/user-attachments/assets/5d379f64-eadc-44ad-b137-e9bd0fd3967e"/><br><br>
+<img src="https://github.com/user-attachments/assets/99119fa9-3710-47bb-9d83-8c4e5dfdd7ef"/><br><br>
 
-**Step 2:** Select image/bounding box of interest<br><br>
+**Step 2:** Select image/bounding box of interest
 
-**Step 3: Optional** Configure processing device, and LightGlue settings
+<img src="https://github.com/user-attachments/assets/ab8ccddf-7c17-485c-b03a-92a13b9e9246"/><br><br>
+
+**Step 3 (Optional):** Select processing device, and configure Advanced settings
+
+<img src="https://github.com/user-attachments/assets/bcdff634-bd3a-4426-bbe6-0bc52ed526c7"/><br><br>
 
 **Step 4:** Click `MATCH BBOXES` button
 
-<img src="https://github.com/user-attachments/assets/53a804a5-9185-4800-99ed-4f5153f88068"/><br><br>
+<img src="https://github.com/user-attachments/assets/9094dc44-1494-4348-997b-ab8b5dd56103"/><br><br>
 
 After finishing using the app, don't forget to stop the app session manually in the App Sessions.
 
