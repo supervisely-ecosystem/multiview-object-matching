@@ -57,7 +57,7 @@ There is a couple of ways you could get Multiview project:
 <details>
   <summary> Import Multi-view Project </summary> <br>
 
-  Multi-view images projects could also be imported via [Import images groups](https://ecosystem.supervisely.com/ecosystem/apps/import-images-groups) application. Just drag & drop the archive. If you don't have a project at your disposal, download a [sample](https://dev.supervisely.com/h5un6l2bnaz1vj8a9qgms4-public/teams_storage/c/0/VR/C6PkYTS9XenMd9cLl9Yb4TGOdx7gJk6xXJ9rQpkuy5GnD0cbxG0QbWadvbEJElOD1rHppc1LJFSlvP20TMbRXdAuiMySTeNMwTkotXoMFLaebFavIaHbaAjUjl2G.tar).
+  Multi-view images projects could also be imported via [Import images groups](https://ecosystem.supervisely.com/ecosystem/apps/import-images-groups) application. Just drag & drop the archive. If you don't have a project at your disposal, download a [sample](https://github.com/supervisely-ecosystem/multiview-object-matching/releases/download/v0.9.4/multiview_example.tar).
 </details>
 
 <details> 
