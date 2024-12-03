@@ -22,9 +22,12 @@
 
 ## Overview
 
-**Multiview Object Matching** is an image labeling toolbox application made for matching bounding boxes across multiview image groups. App works both from selected bounding box object, and from all bounding boxes on an image. Once the image/bbox is selected and `MATCH BBOXES` button is pressed, all images in the multiview group will be updated with matched bounding boxes.
+**Multiview Object Matching** is an image labeling toolbox application designed to match/track/auto-label bounding box objects across multiview image groups. This application streamlines the labeling process for groups of images containing identical objects, possibly captured from similar angles or perspectives. 
 
-## How To Run
+Once the `MATCH BBOXES` button is pressed, the app utilizes LightGlue, a state-of-the-art feature matching deep neural network, to update all images in the multiview group with the matched bounding boxes. After LightGlue is applied, keypoints are transposed to other images, generating bounding boxes. This ensures accurate and consistent object tracking across images taken from different perspectives. The application works both by selecting specific bounding box or all bounding boxes in an image.
+
+
+## How To Use
 
 **Step 0:** Application only works with Multi-view images projects. If you don't have one, check out <a href="#prepare-multi-view-images-project">this section</a> 
 
@@ -32,7 +35,7 @@
 
 <img src="https://github.com/user-attachments/assets/99119fa9-3710-47bb-9d83-8c4e5dfdd7ef"/><br><br>
 
-**Step 2:** Select image/bounding box of interest
+**Step 2:** Select entire image (with bounding box objects) or a single bounding box of interest
 
 <img src="https://github.com/user-attachments/assets/ab8ccddf-7c17-485c-b03a-92a13b9e9246"/><br><br>
 
