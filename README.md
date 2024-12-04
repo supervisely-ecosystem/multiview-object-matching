@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="#Overview">Overview</a> •
-  <a href="#How-To-Run">How To Run</a> •
+  <a href="#How-To-Use">How To Use</a> •
   <a href="#usage-example-match-all-boxes-at-once">Usage Example</a> •
   <a href="#prepare-multi-view-images-project">Prepare Multi-view Project</a> •
   <a href="#acknowledgements">Acknowledgements</a>
