@@ -4,7 +4,7 @@ import src.globals as g
 from src.globals import CACHE
 import src.process_funcs as process
 
-app = sly.Application(layout=layout.layout_card)
+app = sly.Application(layout=layout.layout_card, show_header=False)
 
 
 @app.event(sly.Event.FigureCreated)
