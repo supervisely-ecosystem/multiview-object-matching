@@ -3,8 +3,8 @@
   "version": "2.0.0",
   "name": "Multiview Object Matching",
   "description": "Propagate bboxes to multiview images group",
-  "docker_image": "supervisely/multiview-object-matching:0.0.2",
-  "instance_version": "6.12.5",
+  "docker_image": "supervisely/multiview-object-matching:0.0.3",
+  "instance_version": "6.12.44",
   "categories": [
     "images",
     "labeling"
