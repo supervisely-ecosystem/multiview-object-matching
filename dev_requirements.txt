@@ -1,4 +1,4 @@
-supervisely
+git+https://github.com/supervisely/supervisely.git@v2-apps-show-header
 torch
 opencv-python
 git+https://github.com/supervisely-ecosystem/LightGlue.git@main
