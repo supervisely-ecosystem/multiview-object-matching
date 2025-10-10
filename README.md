@@ -12,7 +12,7 @@
   <a href="#acknowledgements">Acknowledgements</a>
 </p>
 
-[![](https://img.shields.io/badge/supervisely-ecosystem-brightgreen)](https://ecosystem.supervisely.com/apps/supervisely-ecosystem/multiview-object-matching)
+[![](https://img.shields.io/badge/supervisely-ecosystem-brightgreen)](../../../../supervisely-ecosystem/multiview-object-matching)
 [![](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://supervisely.com/slack)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/supervisely-ecosystem/multiview-object-matching)
 [![views](https://app.supervisely.com/img/badges/views/supervisely-ecosystem/multiview-object-matching.png)](https://supervisely.com)
@@ -73,14 +73,14 @@ Get a small sample project from ecosystem: <br>
 
 ### Option 3: "Group Images for Multiview Labeling" Application
 
-You could run [this application](https://ecosystem.supervisely.com/apps/group-images-for-multiview-labeling) on your existing project to group images for multi-view labeling.
+You could run [this application](../../../../supervisely-ecosystem/group-images-for-multiview-labeling) on your existing project to group images for multi-view labeling.
 Application allows to group images by tags, instances of object classes, or simply by batches (just a number of images).
 
 <img src="https://github.com/user-attachments/assets/8c983c14-ab70-46ce-ab29-fb930a6e7864"/>
 
 ### Option 4: Import Multi-view Project
 
-Multi-view images projects could also be imported via [Import images groups](https://ecosystem.supervisely.com/ecosystem/apps/import-images-groups) application. Just drag & drop the archive. If you don't have a project at your disposal, download a [sample archive](https://github.com/supervisely-ecosystem/multiview-object-matching/releases/download/v0.9.4/multiview_example.tar).
+Multi-view images projects could also be imported via [Import images groups](../../../../supervisely-ecosystem/import-images-groups) application. Just drag & drop the archive. If you don't have a project at your disposal, download a [sample archive](https://github.com/supervisely-ecosystem/multiview-object-matching/releases/download/v0.9.4/multiview_example.tar).
 
 ### Option 5: Create multi-view project with Python
 
